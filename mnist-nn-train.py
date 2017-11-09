@@ -29,6 +29,7 @@ def show_info():
     train_labels = mnist.train.labels
     test_images = mnist.test.images
     test_labels = mnist.test.labels
+
     print '\n..::Overview::..'
     print '- Type of mnist data is ', type(mnist)
     print '- Number of train data is ', mnist.train.num_examples
@@ -54,7 +55,7 @@ def show_info():
 
 
 def training():
-    learning_rate = 0.001
+    learning_rate = 0.0001
     training_epochs = 100
     batch_size = 128
     num_batch = int(mnist.train.num_examples / batch_size)
@@ -107,22 +108,21 @@ def training():
             if epoch % display_step == 0:
                 print 'Epoch ' + str(epoch) + ', minibatch loss= ' + '{:.4f}'.format(_loss) + ', training accuracy= ' + '{:.3f}'.format(_accuracy)
 
-        print 'Finished!!!'
+        print 'Training finished!!!'
         print 'Learning rate: ', learning_rate
         print 'Batch size: ', batch_size
-        print 'Testing accuracy:', session.run(accuracy, feed_dict={X: mnist.test.images, Y: mnist.test.labels})
-        print '\n'
-
-        # export model graph to Tensorboard
-        writer = tf.summary.FileWriter(dirname(__file__) + 'tensorboard/mnist-nn', session.graph)
-        writer.close()
-        print 'The tensorboard graph was saved in path: tensorboard/mnist-nn'
-        print 'You can execute this command in terminal to see the graph: tensorboard --logdir="./tensorboard/mnist-nn"'
+        print 'Testing accuracy: ', session.run(accuracy, feed_dict={X: mnist.test.images, Y: mnist.test.labels})
         print '\n'
 
         # save the variables to disk
         save_path = saver.save(session, dirname(__file__) + "trained_models/mnist-nn/model")
-        print 'Trained model has been saved in path: ', save_path
+        print 'The trained model has been saved in path: ', save_path
+
+        # export model graph to Tensorboard
+        writer = tf.summary.FileWriter(dirname(__file__) + 'tensorboard/mnist-nn', session.graph)
+        writer.close()
+        print 'The tensorboard graph has been saved in path: tensorboard/mnist-nn'
+        print 'You can execute this command in terminal to see the graph: tensorboard --logdir="./tensorboard/mnist-nn"'
         print '\n'
 
         # draw loss diagram
