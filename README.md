@@ -5,7 +5,8 @@ This repo contains source code for learning purpose only.
 ### Step 1: install Tensorflow
 
 Link: https://www.tensorflow.org/install/install_linux
-After installed, for example, the Tensorflow will be installed inside virtualenv at: ~/tensorflow
+
+After installed, for example, the Tensorflow will be installed inside virtualenv at: ```~/tensorflow```
 
 ### Step 2: activate virtualenv
 
