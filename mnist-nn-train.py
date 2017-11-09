@@ -1,4 +1,5 @@
 import os
+from os.path import dirname
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -23,15 +24,15 @@ Reference:
 """
 
 
-def show_info(dataset):
-    train_images = dataset.train.images
-    train_labels = dataset.train.labels
-    test_images = dataset.test.images
-    test_labels = dataset.test.labels
+def show_info():
+    train_images = mnist.train.images
+    train_labels = mnist.train.labels
+    test_images = mnist.test.images
+    test_labels = mnist.test.labels
     print '\n..::Overview::..'
-    print '- Type of mnist is ', type(dataset)
-    print '- Number of train data is ', dataset.train.num_examples
-    print '- Number of test data is ', dataset.test.num_examples
+    print '- Type of mnist data is ', type(mnist)
+    print '- Number of train data is ', mnist.train.num_examples
+    print '- Number of test data is ', mnist.test.num_examples
     print '- Training images: type {}, shape {}'.format(type(train_images), train_images.shape)
     print '- Training labels: type {}, shape {} '.format(type(train_labels), train_labels.shape)
     print '- Test images: type {}, shape {}'.format(type(test_images), test_images.shape)
@@ -44,7 +45,7 @@ def show_info(dataset):
         img = np.reshape(train_images[i, :], (28, 28))
         label = np.argmax(train_labels[i, :])
 
-        # use matplotlib to show 3 random elements and it's label visually
+        # use matplotlib to show 3 random elements and its label visually
         plt.matshow(img, cmap=plt.get_cmap('gray'))
         plt.title('item ' + str(i) + 'th was labeled ' + str(label))
         plt.show()
@@ -52,31 +53,32 @@ def show_info(dataset):
     print '\n'
 
 
-def training(dataset):
+def training():
     learning_rate = 0.001
+    training_epochs = 100
     batch_size = 128
-    num_steps = 10000
-    display_step = 1000
+    display_step = 10
 
     # init input layer
     input_nodes = 784  # 28x28 pixels
     X = tf.placeholder(tf.float32, shape=[None, input_nodes])
 
     # init hidden layer 1
+    # hidden layer 1 = weight_1 * X + bias_1
     hidden_1_nodes = 256  # each pixel has value from 0 - 255 (0: black, 255: white) -> 256 values can occur
     weight_1 = tf.Variable(tf.random_normal([input_nodes, hidden_1_nodes]), name='weight_1')
     bias_1 = tf.Variable(tf.random_normal([hidden_1_nodes]), name='bias_1')
     hidden_layer_1 = tf.add(tf.matmul(X, weight_1), bias_1)  # hidden layer 1 = weight * X + bias
 
     # init hidden layer 2
-    # hidden layer 2 = weight * X + bias
+    # hidden layer 2 = weight_2 * output from hidden layer 1 + bias_2
     hidden_2_nodes = 256  # each pixel has value from 0 - 255 (0: black, 255: white) -> 256 values can occur
     weight_2 = tf.Variable(tf.random_normal([hidden_1_nodes, hidden_2_nodes]), name='weight_2')
     bias_2 = tf.Variable(tf.random_normal([hidden_2_nodes]), name='bias_2')
     hidden_layer_2 = tf.add(tf.matmul(hidden_layer_1, weight_2), bias_2)
 
     # init output layer
-    # output layer = weight * input from hidden layer 2 + bias
+    # output layer = weight_output * output from hidden layer 2 + bias_output
     output_nodes = 10
     Y = tf.placeholder(tf.float32, shape=[None, output_nodes])
     weight_output = tf.Variable(tf.random_normal([hidden_2_nodes, output_nodes]), name='weight_output')
@@ -84,7 +86,7 @@ def training(dataset):
     output_layer = tf.add(tf.matmul(hidden_layer_2, weight_output), bias_output)
 
     # reduce loss (back propagation)
-    test_dict = {X: dataset.test.images, Y: dataset.test.labels}
+    test_dict = {X: mnist.test.images, Y: mnist.test.labels}
     loss_output = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output_layer, labels=Y))
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
     train_output = optimizer.minimize(loss_output)
@@ -94,31 +96,47 @@ def training(dataset):
     print '..::Model training::..'
     with tf.Session() as session:
         session.run(tf.global_variables_initializer())
+        saver = tf.train.Saver()
+        losses = []
 
-        for step in range(0, num_steps):
-            batch_x, batch_y = dataset.train.next_batch(batch_size)
-            train_dict = {X: batch_x, Y: batch_y}
+        num_batch = int(mnist.train.num_examples / batch_size)
+        for epoch in range(training_epochs):
+            for i in range(num_batch):
+                batch_x, batch_y = mnist.train.next_batch(batch_size)
+                train_dict = {X: batch_x, Y: batch_y}
+                _train, _loss, _accuracy = session.run([train_output, loss_output, accuracy], feed_dict=train_dict)
+                losses.append(_loss)
 
-            # run optimization output (backprop)
-            session.run(train_output, feed_dict=train_dict)
-            if step % display_step == 0:
-                # calculate batch loss and accuracy
-                loss, acc = session.run([loss_output, accuracy], feed_dict=train_dict)
-                print 'Step ' + str(step) + \
-                      ', minibatch loss= ' + '{:.4f}'.format(loss) + \
-                      ', training accuracy= ' + '{:.3f}'.format(acc)
+            if epoch % display_step == 0:
+                print 'Epoch ' + str(epoch) + ', minibatch loss= ' + '{:.4f}'.format(_loss) + ', training accuracy= ' + '{:.3f}'.format(_accuracy)
 
         print 'Finished!!!'
-        print '\n'
-
         print 'Learning rate: ', learning_rate
         print 'Batch size: ', batch_size
         print 'Testing accuracy:', session.run(accuracy, feed_dict=test_dict)
         print '\n'
 
+        # export model graph to Tensorboard
+        writer = tf.summary.FileWriter(dirname(__file__) + 'tensorboard/mnist-nn', session.graph)
+        writer.close()
+        print 'The tensorboard graph was saved in path: tensorboard/mnist-nn'
+        print 'You can execute this command in terminal to see the graph: tensorboard --logdir="./tensorboard/mnist-nn"'
+        print '\n'
+
+        # save the variables to disk
+        save_path = saver.save(session, dirname(__file__) + "trained_models/mnist-nn/model")
+        print 'Trained model has been saved in path: ', save_path
+        print '\n'
+
+        # draw loss diagram
+        plt.title('The loss diagram after trained')
+        plt.plot(losses[:])
+        plt.savefig('diagrams/diagram_of_loss_values_after_predicted')
+        plt.show()
+
 
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets('data/mnist', one_hot=True)
-show_info(mnist)
-training(mnist)
+show_info()
+training()
 

@@ -2,5 +2,6 @@
 /.idea
 .DS_Store
 data/mnist
-
-
+tensorboard/*
+trained_models/*
+diagrams/*
