@@ -39,7 +39,7 @@ def show_info():
     print '- Test labels: type {}, shape {}'.format(type(test_labels), test_labels.shape)
 
     # take 3 random elements from the training images dataset
-    print 'Show random images and labels...'
+    print 'Show random images and its labels...'
     random_indexes = np.random.randint(train_images.shape[0], size=3)
     for i in random_indexes:
         img = np.reshape(train_images[i, :], (28, 28))
@@ -57,7 +57,9 @@ def training():
     learning_rate = 0.001
     training_epochs = 100
     batch_size = 128
+    num_batch = int(mnist.train.num_examples / batch_size)
     display_step = 10
+    losses = []
 
     # init input layer
     input_nodes = 784  # 28x28 pixels
@@ -68,7 +70,7 @@ def training():
     hidden_1_nodes = 256  # each pixel has value from 0 - 255 (0: black, 255: white) -> 256 values can occur
     weight_1 = tf.Variable(tf.random_normal([input_nodes, hidden_1_nodes]), name='weight_1')
     bias_1 = tf.Variable(tf.random_normal([hidden_1_nodes]), name='bias_1')
-    hidden_layer_1 = tf.add(tf.matmul(X, weight_1), bias_1)  # hidden layer 1 = weight * X + bias
+    hidden_layer_1 = tf.add(tf.matmul(X, weight_1), bias_1)
 
     # init hidden layer 2
     # hidden layer 2 = weight_2 * output from hidden layer 1 + bias_2
@@ -85,21 +87,17 @@ def training():
     bias_output = tf.Variable(tf.random_normal([output_nodes]), name='bias_output')
     output_layer = tf.add(tf.matmul(hidden_layer_2, weight_output), bias_output)
 
-    # reduce loss (back propagation)
-    test_dict = {X: mnist.test.images, Y: mnist.test.labels}
+    # reduce loss
     loss_output = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output_layer, labels=Y))
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
     train_output = optimizer.minimize(loss_output)
-    correct_prediction = tf.equal(tf.argmax(output_layer, 1), tf.argmax(Y, 1))
-    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+    accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(output_layer, 1), tf.argmax(Y, 1)), tf.float32))
 
     print '..::Model training::..'
     with tf.Session() as session:
         session.run(tf.global_variables_initializer())
         saver = tf.train.Saver()
-        losses = []
 
-        num_batch = int(mnist.train.num_examples / batch_size)
         for epoch in range(training_epochs):
             for i in range(num_batch):
                 batch_x, batch_y = mnist.train.next_batch(batch_size)
@@ -113,7 +111,7 @@ def training():
         print 'Finished!!!'
         print 'Learning rate: ', learning_rate
         print 'Batch size: ', batch_size
-        print 'Testing accuracy:', session.run(accuracy, feed_dict=test_dict)
+        print 'Testing accuracy:', session.run(accuracy, feed_dict={X: mnist.test.images, Y: mnist.test.labels})
         print '\n'
 
         # export model graph to Tensorboard
@@ -135,6 +133,7 @@ def training():
         plt.show()
 
 
+# run the program
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets('data/mnist', one_hot=True)
 show_info()
