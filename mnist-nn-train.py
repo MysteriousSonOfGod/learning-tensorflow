@@ -101,8 +101,7 @@ def training():
         for epoch in range(training_epochs):
             for i in range(num_batch):
                 batch_x, batch_y = mnist.train.next_batch(batch_size)
-                train_dict = {X: batch_x, Y: batch_y}
-                _train, _loss, _accuracy = session.run([train_output, loss_output, accuracy], feed_dict=train_dict)
+                _train, _loss, _accuracy = session.run([train_output, loss_output, accuracy], feed_dict={X: batch_x, Y: batch_y})
                 losses.append(_loss)
 
             if epoch % display_step == 0:
@@ -129,7 +128,7 @@ def training():
         # draw loss diagram
         plt.title('The loss diagram after trained')
         plt.plot(losses[:])
-        plt.savefig('diagrams/diagram_of_loss_values_after_predicted')
+        plt.savefig('diagrams/diagram_of_loss_values_after_trained')
         plt.show()
 
 
