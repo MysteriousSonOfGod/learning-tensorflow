@@ -1,4 +1,6 @@
+from __future__ import division
 import os
+import os.path
 from os.path import dirname
 import sys
 import numpy as np
@@ -13,7 +15,10 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 """
 The MNIST dataset:
 - is a dataset of handwritten digits
-- 55,000 images for training and 10,000 images for testing (include labels for each image)
+- include these dataset:
+  + mnist.train: 55,000 data points of training data (include labels for each image)
+  + mnist.test: 10,000 points of test data (include labels for each image)
+  + mnist.validation: 5,000 points of validation data (include labels for each image)
 - each image has the dimension of 28x28 pixels (-> 1D array: 784 pixels)
 - each pixel has value from 0 - 255 (0: black, 255: white) to display a specific color -> 256 values can occur
 
@@ -52,8 +57,6 @@ def show_info():
         plt.title('item ' + str(i) + 'th was labeled ' + str(label))
         plt.show()
 
-    print '\n'
-
 
 def training():
     learning_rate = 0.0001
@@ -65,7 +68,7 @@ def training():
 
     # init input layer
     input_nodes = 784  # 28x28 pixels
-    X = tf.placeholder(tf.float32, shape=[None, input_nodes])
+    X = tf.placeholder(tf.float32, shape=[None, input_nodes], name='X')
 
     # init hidden layer 1
     # hidden layer 1 = weight_1 * X + bias_1
@@ -84,7 +87,7 @@ def training():
     # init output layer
     # output layer = weight_output * output from hidden layer 2 + bias_output
     output_nodes = 10
-    Y = tf.placeholder(tf.float32, shape=[None, output_nodes])
+    Y = tf.placeholder(tf.float32, shape=[None, output_nodes], name='Y')
     weight_output = tf.Variable(tf.random_normal([hidden_2_nodes, output_nodes]), name='weight_output')
     bias_output = tf.Variable(tf.random_normal([output_nodes]), name='bias_output')
     output_layer = tf.add(tf.matmul(hidden_layer_2, weight_output), bias_output)
@@ -95,7 +98,10 @@ def training():
     train_output = optimizer.minimize(loss_output)
     accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(output_layer, 1), tf.argmax(Y, 1)), tf.float32))
 
-    print '..::Model training::..'
+    # store the node contains the predicted value
+    tf.add_to_collection("activation_output", output_layer)
+
+    print '\n..::Model training::..'
     with tf.Session() as session:
         session.run(tf.global_variables_initializer())
         saver = tf.train.Saver()
@@ -120,7 +126,8 @@ def training():
         for epoch in range(training_epochs):
             for batch in range(total_batches_need_to_run):
                 batch_x, batch_y = mnist.train.next_batch(batch_size)
-                _train, _loss, _accuracy = session.run([train_output, loss_output, accuracy], feed_dict={X: batch_x, Y: batch_y})
+                _train, _loss, _accuracy = session.run([train_output, loss_output, accuracy],
+                                                       feed_dict={X: batch_x, Y: batch_y})
                 losses.append(_loss)
 
             if epoch % display_step == 0:
@@ -150,9 +157,77 @@ def training():
         plt.show()
 
 
+def predict_hand_writing_images_after_trained(total_test_images=10, is_display_diagram=False):
+    print '\n..::Use trained model to predict::..'
+
+    if not os.path.exists('trained_models/mnist-nn/model.meta'):
+        print 'The trained model is not exist. Terminating...'
+        sys.exit()
+
+    # because the validation dataset only has 5,000 examples
+    if total_test_images < 0 or total_test_images > 5000:
+        total_test_images = 5000
+
+    # declare model files
+    model_file = dirname(__file__) + "trained_models/mnist-nn/model"
+    model_meta_file = dirname(__file__) + 'trained_models/mnist-nn/model.meta'
+
+    with tf.Session() as session:
+        # load model and restore the session
+        saver = tf.train.import_meta_graph(model_meta_file, clear_devices=True)
+        saver.restore(session, model_file)
+
+        # get the node contains the predicted value
+        activation = tf.get_collection("activation_output")
+
+        # take random elements from the validation images dataset (todo: SHOULD GET VALIDATION TEST SET)
+        test_images = mnist.validation.images
+        test_labels = mnist.validation.labels
+        random_indexes = np.random.randint(test_images.shape[0], size=total_test_images)
+        total_rights = 0
+        for i in random_indexes:
+            batch_x = [test_images[i]]
+            batch_y = [test_labels[i]]
+
+            # predict
+            result = session.run(activation, feed_dict={'X:0': batch_x, 'Y:0': batch_y})
+
+            # convert prediction result to number which the human can understand
+            result_number = np.argmax(result)
+
+            # draw result diagram
+            img = np.reshape(batch_x, (28, 28))
+            label = np.argmax(batch_y)
+
+            # https://stackoverflow.com/questions/37340049/how-do-i-print-colored-output-to-the-terminal-in-python
+            RED = "\033[1;31m"
+            GREEN = "\033[0;32m"
+            RESET = "\033[0;0m"
+            color = RED
+            status = 'W'  # Wrong
+            if result_number == label:
+                total_rights += 1
+                status = 'R'  # Right
+                color = GREEN
+
+            sys.stdout.write(color)
+            print '[' + status + ']' + ' Item ' + str(i) + 'th, label: ' + str(label) + ', model predicted: ' + str(result_number)
+            if is_display_diagram:
+                plt.matshow(img, cmap=plt.get_cmap('gray'))
+                plt.title('item ' + str(i) + 'th was labeled ' + str(label) + '. Model predicted: ' + str(result_number))
+                plt.show()
+
+        ok_percent = (total_rights / total_test_images) * 100
+        sys.stdout.write(RESET)
+        print '\n'
+        print 'Total of predicted examples: {}'.format(total_test_images)
+        print 'Total of right prediction: {} ({}%)'.format(total_rights, ok_percent)
+        print 'Predict done\n'
+
+
 # run the program
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets('data/mnist', one_hot=True)
 show_info()
 training()
-
+predict_hand_writing_images_after_trained(105)

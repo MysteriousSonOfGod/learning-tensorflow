@@ -1,6 +1,8 @@
 import os
 import tensorflow as tf
 
+
+# hide Tensorflow GPU warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 a = tf.placeholder('float')
