@@ -180,7 +180,7 @@ def predict_hand_writing_images_after_trained(total_test_images=10, is_display_d
         # get the node contains the predicted value
         activation = tf.get_collection("activation_output")
 
-        # take random elements from the validation images dataset (todo: SHOULD GET VALIDATION TEST SET)
+        # take random elements from the validation images dataset
         test_images = mnist.validation.images
         test_labels = mnist.validation.labels
         random_indexes = np.random.randint(test_images.shape[0], size=total_test_images)
