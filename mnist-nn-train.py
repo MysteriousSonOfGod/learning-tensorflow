@@ -21,6 +21,7 @@ Reference:
 - http://www.cs.nyu.edu/~roweis/data/mnist_train2.jpg
 - https://media.licdn.com/mpr/mpr/AAEAAQAAAAAAAAoYAAAAJDI5OGU3NDYwLTEzNWItNGVmZS1hMzVhLWIxYTI0MmU5MDFmYQ.png
 - https://www.simplicity.be/articles/recognizing-handwritten-digits/img/matrix.jpg
+- https://www.youtube.com/watch?v=aircAruvnKk&list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi
 """
 
 
@@ -57,8 +58,8 @@ def show_info():
 def training():
     learning_rate = 0.0001
     training_epochs = 100
-    batch_size = 128
-    num_batch = int(mnist.train.num_examples / batch_size)
+    batch_size = 128  # people usually use batch size number as a power of 2 for better memory usage (64, 128, 256...)
+    total_batches_need_to_run = int(mnist.train.num_examples / batch_size)  # also called "iterations"
     display_step = 10
     losses = []
 
@@ -99,8 +100,25 @@ def training():
         session.run(tf.global_variables_initializer())
         saver = tf.train.Saver()
 
+        """
+        Epoch: when an entire dataset is passed through the network.
+        Batch: small portion of the dataset are passed through the network.
+
+        Ex:
+        Current MNIST dataset has 55,000 training examples with batch size = 128
+        -> when entire 55,000 examples are passed through the network, you have done 1 epoch.
+        -> total batches (iterations) need to run to complete 1 epoch = int(55,000 / 128) = 429
+           + 1st iteration (batch 1): {X1: Y1}, ..., {X128: Y128}
+           + 2nd iteration (batch 2): {X129: Y129}, ..., {X256: Y256}
+           + ...
+           + 429th iteration (batch 429): ...
+
+        Why need ?
+        - Your fancy computer machine has limited resources to be able to train entire dataset in 1 time.
+        - Optimization (via the gradient descent) will has less accuracy when you train the dataset only 1 time.
+        """
         for epoch in range(training_epochs):
-            for i in range(num_batch):
+            for batch in range(total_batches_need_to_run):
                 batch_x, batch_y = mnist.train.next_batch(batch_size)
                 _train, _loss, _accuracy = session.run([train_output, loss_output, accuracy], feed_dict={X: batch_x, Y: batch_y})
                 losses.append(_loss)
