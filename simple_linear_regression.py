@@ -1,5 +1,6 @@
 import numpy as np
 import os
+from os.path import dirname
 import sys
 import matplotlib.pyplot as plt
 import tensorflow as tf
@@ -73,6 +74,11 @@ with tf.Session() as session:
     _w, _b = session.run([w, b], feed_dict=training_data)
     print('\nFinished!!!')
     print('y = {} * x + {}\n'.format(_w, _b))
+
+    # export model graph to Tensorboard
+    # you can run this command to see the graph: tensorboard --logdir="./tensorboard/simple-linear"
+    writer = tf.summary.FileWriter(dirname(__file__) + 'tensorboard/simple-linear', session.graph)
+    writer.close()
 
     # display the fitted line
     plt.plot(data[:, 0], data[:, 1], "o", alpha=0.5)
