@@ -17,9 +17,9 @@ The MNIST dataset:
 - is a dataset of handwritten digits
 - include these dataset:
   + mnist.train: 55,000 data points of training data (include labels for each image)
-  + mnist.test: 10,000 points of test data (include labels for each image)
-  + mnist.validation: 5,000 points of validation data (include labels for each image)
-- each image has the dimension of 28x28 pixels (-> 1D array: 784 pixels)
+  + mnist.test: 10,000 data points of test data (include labels for each image)
+  + mnist.validation: 5,000 data points of validation data (include labels for each image)
+- each image is the 2D array and has the dimension of 28x28 pixels (-> 1D array: 784 pixels)
 - each pixel has value from 0 - 255 (0: black, 255: white) to display a specific color -> 256 values can occur
 
 Reference:
@@ -111,7 +111,7 @@ def training():
         Batch: small portion of the dataset are passed through the network.
 
         Ex:
-        Current MNIST dataset has 55,000 training examples with batch size = 128
+        Current MNIST dataset has 55,000 training examples and we are setting the batch size = 128
         -> when entire 55,000 examples are passed through the network, you have done 1 epoch.
         -> total batches (iterations) need to run to complete 1 epoch = int(55,000 / 128) = 429
            + 1st iteration (batch 1): {X1: Y1}, ..., {X128: Y128}
