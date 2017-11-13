@@ -25,8 +25,8 @@ def generate_dummy_data(is_display_graph=False):
 
 
 # define flags
-tf.app.flags.DEFINE_integer('training_epochs', 1000, 'Total training epochs')
-tf.app.flags.DEFINE_integer('display_step', 100, 'Step to display the loss value')
+tf.app.flags.DEFINE_integer('training_epochs', 10000, 'Total training epochs')
+tf.app.flags.DEFINE_integer('display_step', 1000, 'Step to display the loss value')
 tf.app.flags.DEFINE_float('learning_rate', 1e-9, 'The learning rate')
 # tf.app.flags.DEFINE_float('expected_loss_minimum', 1e-10, 'The expected loss minimum value')
 FLAGS = tf.app.flags.FLAGS
