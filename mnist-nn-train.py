@@ -6,6 +6,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
+from tensorflow.examples.tutorials.mnist import input_data
 
 
 # hide Tensorflow GPU warnings
@@ -36,17 +37,17 @@ def show_info():
     test_images = mnist.test.images
     test_labels = mnist.test.labels
 
-    print '\n..::Overview::..'
-    print '- Type of mnist data is ', type(mnist)
-    print '- Number of train data is ', mnist.train.num_examples
-    print '- Number of test data is ', mnist.test.num_examples
-    print '- Training images: type {}, shape {}'.format(type(train_images), train_images.shape)
-    print '- Training labels: type {}, shape {} '.format(type(train_labels), train_labels.shape)
-    print '- Test images: type {}, shape {}'.format(type(test_images), test_images.shape)
-    print '- Test labels: type {}, shape {}'.format(type(test_labels), test_labels.shape)
+    print('\n..::Overview::..')
+    print('- Type of mnist data is {}'.format(type(mnist)))
+    print('- Number of train data is {}'.format(mnist.train.num_examples))
+    print('- Number of test data is {}'.format(mnist.test.num_examples))
+    print('- Training images: type {}, shape {}'.format(type(train_images), train_images.shape))
+    print('- Training labels: type {}, shape {} '.format(type(train_labels), train_labels.shape))
+    print('- Test images: type {}, shape {}'.format(type(test_images), test_images.shape))
+    print('- Test labels: type {}, shape {}'.format(type(test_labels), test_labels.shape))
 
     # take 3 random elements from the training images dataset
-    print 'Show random images and its labels...'
+    print('Show random images and its labels...')
     random_indexes = np.random.randint(train_images.shape[0], size=3)
     for i in random_indexes:
         img = np.reshape(train_images[i, :], (28, 28))
@@ -101,7 +102,7 @@ def training():
     # store the node contains the predicted value
     tf.add_to_collection("activation_output", output_layer)
 
-    print '\n..::Model training::..'
+    print('\n..::Model training::..')
     with tf.Session() as session:
         session.run(tf.global_variables_initializer())
         saver = tf.train.Saver()
@@ -131,24 +132,24 @@ def training():
                 losses.append(_loss)
 
             if epoch % display_step == 0:
-                print 'Epoch ' + str(epoch) + ', minibatch loss= ' + '{:.4f}'.format(_loss) + ', training accuracy= ' + '{:.3f}'.format(_accuracy)
+                print('Epoch {}, minibatch loss: {:.4f}, training accuracy: {:.4f}'.format(epoch, _loss, _accuracy))
 
-        print 'Training finished!!!'
-        print 'Learning rate: ', learning_rate
-        print 'Batch size: ', batch_size
-        print 'Testing accuracy: ', session.run(accuracy, feed_dict={X: mnist.test.images, Y: mnist.test.labels})
-        print '\n'
+        print('Training finished!!!')
+        print('Learning rate: {}'.format(learning_rate))
+        print('Batch size: {}'.format(batch_size))
+        print('Testing accuracy: {}'.format(session.run(accuracy, feed_dict={X: mnist.test.images, Y: mnist.test.labels})))
+        print('\n')
 
         # save the variables to disk
         save_path = saver.save(session, dirname(__file__) + "trained_models/mnist-nn/model")
-        print 'The trained model has been saved in path: ', save_path
+        print('The trained model has been saved in path: {}'.format(save_path))
 
         # export model graph to Tensorboard
         writer = tf.summary.FileWriter(dirname(__file__) + 'tensorboard/mnist-nn', session.graph)
         writer.close()
-        print 'The tensorboard graph has been saved in path: tensorboard/mnist-nn'
-        print 'You can execute this command in terminal to see the graph: tensorboard --logdir="./tensorboard/mnist-nn"'
-        print '\n'
+        print('The tensorboard graph has been saved in path: tensorboard/mnist-nn')
+        print('You can execute this command in terminal to see the graph: tensorboard --logdir="./tensorboard/mnist-nn"')
+        print('\n')
 
         # draw loss diagram
         plt.title('The loss diagram after trained')
@@ -158,10 +159,10 @@ def training():
 
 
 def predict_hand_writing_images_after_trained(total_test_images=10, is_display_diagram=False):
-    print '\n..::Use trained model to predict::..'
+    print('\n..::Use trained model to predict::..')
 
     if not os.path.exists('trained_models/mnist-nn/model.meta'):
-        print 'The trained model is not exist. Terminating...'
+        print('The trained model is not exist. Terminating...')
         sys.exit()
 
     # because the validation dataset only has 5,000 examples
@@ -211,7 +212,7 @@ def predict_hand_writing_images_after_trained(total_test_images=10, is_display_d
                 color = GREEN
 
             sys.stdout.write(color)
-            print '[' + status + ']' + ' Item ' + str(i) + 'th, label: ' + str(label) + ', model predicted: ' + str(result_number)
+            print('[{}] Item {}th, label: {}, model predicted: {}'.format(status, i, label, result_number))
             if is_display_diagram:
                 plt.matshow(img, cmap=plt.get_cmap('gray'))
                 plt.title('item ' + str(i) + 'th was labeled ' + str(label) + '. Model predicted: ' + str(result_number))
@@ -219,14 +220,13 @@ def predict_hand_writing_images_after_trained(total_test_images=10, is_display_d
 
         ok_percent = (total_rights / total_test_images) * 100
         sys.stdout.write(RESET)
-        print '\n'
-        print 'Total of predicted examples: {}'.format(total_test_images)
-        print 'Total of right prediction: {} ({}%)'.format(total_rights, ok_percent)
-        print 'Predict done\n'
+        print('\n')
+        print('Total of predicted examples: {}'.format(total_test_images))
+        print('Total of right prediction: {} ({:.2f}%)'.format(total_rights, ok_percent))
+        print('Predict done\n')
 
 
 # run the program
-from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets('data/mnist', one_hot=True)
 show_info()
 training()

@@ -73,7 +73,7 @@ with tf.Session() as session:
 
     _w, _b = session.run([w, b], feed_dict=training_data)
     print('\nFinished!!!')
-    print('y = {} * x + {}\n'.format(_w, _b))
+    print('y = {0:.4f} * x + {1:.4f}\n'.format(_w, _b))
 
     # export model graph to Tensorboard
     # you can run this command to see the graph: tensorboard --logdir="./tensorboard/simple-linear"
