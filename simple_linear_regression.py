@@ -52,6 +52,9 @@ optimizer = tf.train.GradientDescentOptimizer(FLAGS.learning_rate)
 train = optimizer.minimize(loss)
 training_data = {X: data[:, 0], Y: data[:, 1]}
 
+# calculate score of the model
+unexplained_loss = tf.reduce_sum(tf.squared_difference(hypothesis, Y), name='unexplained_loss')
+R_squared = tf.subtract(1.0, tf.divide(unexplained_loss, loss))
 
 # running the computation in Tensorflow
 with tf.Session() as session:
@@ -71,9 +74,10 @@ with tf.Session() as session:
         #     break
         # previous_loss = _loss
 
-    _w, _b = session.run([w, b], feed_dict=training_data)
+    _w, _b, _r_squared = session.run([w, b, R_squared], feed_dict=training_data)
     print('\nFinished!!!')
-    print('y = {0:.4f} * x + {1:.4f}\n'.format(_w, _b))
+    print('y = {0:.4f} * x + {1:.4f}'.format(_w, _b))
+    print('score = {0:.4f}\n'.format(_r_squared))
 
     # export model graph to Tensorboard
     # you can run this command to see the graph: tensorboard --logdir="./tensorboard/simple-linear"
